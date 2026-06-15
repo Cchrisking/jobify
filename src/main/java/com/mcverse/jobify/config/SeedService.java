@@ -31,56 +31,57 @@ public class SeedService {
                 post("Senior Frontend Developer",
                         "Senior React and TypeScript developer needed to lead our web platform. " +
                         "5+ years of hands-on experience with React, Next.js, and REST APIs required.",
-                        4.5, 75.00, techcorp),
+                        4.5, 75.00, techcorp, true),
 
                 post("Backend Engineer",
                         "Senior Spring Boot developer for a high-throughput fintech platform. " +
                         "5+ years of Java experience, strong knowledge of JPA and microservices.",
-                        4.7, 72.50, techcorp),
+                        4.7, 72.50, techcorp, true),
 
                 post("Junior QA Engineer",
                         "Entry-level QA engineer to join our quality team. " +
                         "0-2 years of testing experience. Training provided — great way to start your career.",
-                        4.0, 35.00, techcorp),
+                        4.0, 35.00, techcorp, false),  // position filled
 
                 // ── StartupXYZ ───────────────────────────────────────────────────────
                 post("Product Designer",
                         "Mid-level UX/UI designer with 3+ years of experience in Figma, " +
                         "user research, and design systems. You will own the end-to-end design process.",
-                        4.2, 55.00, startupxyz),
+                        4.2, 55.00, startupxyz, true),
 
                 post("DevOps Engineer",
                         "Senior DevOps engineer with 7+ years of experience managing cloud infrastructure. " +
                         "AWS-certified preferred. Expertise in Kubernetes, Terraform, and CI/CD pipelines.",
-                        4.8, 85.00, startupxyz),
+                        4.8, 85.00, startupxyz, true),
 
                 post("Full-Stack Developer",
                         "Mid-level full-stack developer with 2-5 years of experience in React and Node.js. " +
                         "You will ship features across our entire product stack.",
-                        4.3, 60.00, startupxyz),
+                        4.3, 60.00, startupxyz, true),
 
                 // ── Finance Group ─────────────────────────────────────────────────────
                 post("Senior Data Scientist",
                         "Senior data scientist with 5+ years of experience in Python, scikit-learn, and " +
                         "financial modelling. You will build predictive models for risk and revenue.",
-                        4.6, 80.00, financegroup),
+                        4.6, 80.00, financegroup, true),
 
                 post("Junior Business Analyst",
                         "Entry-level business analyst. 1+ years of experience in data analysis or finance. " +
                         "You will support senior analysts with reporting and dashboard creation.",
-                        3.9, 40.00, financegroup),
+                        3.9, 40.00, financegroup, false),  // position filled
 
                 post("ML Engineer",
                         "Senior machine learning engineer with 5+ years of experience. " +
                         "Deep learning and NLP expertise required. You will productionise ML models at scale.",
-                        4.9, 90.00, financegroup)
+                        4.9, 90.00, financegroup, true)
         ));
     }
 
     private static JobPost post(String title, String description, double rating,
-                                double rate, Employer employer) {
+                                double rate, Employer employer, boolean available) {
         JobPost p = new JobPost(title, description, rating, rate);
         p.setEmployer(employer);
+        p.setAvailable(available);
         return p;
     }
 }

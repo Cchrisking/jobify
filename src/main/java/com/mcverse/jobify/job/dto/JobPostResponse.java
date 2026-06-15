@@ -22,5 +22,9 @@ public record JobPostResponse(
 
         @Schema(description = "Username of the employer who created this post; null if unassigned",
                 example = "acme_corp", nullable = true)
-        String employerUsername
+        String employerUsername,
+
+        @Schema(description = "Whether the position is still open and accepting applications. " +
+                "Use this to hide closed/filled positions in the UI.", example = "true")
+        boolean available
 ) {}

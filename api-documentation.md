@@ -127,7 +127,16 @@ Authenticates an existing account.
 
 ### `GET /jobs`
 
-Returns the full list of job posts.
+Returns job postings. By default returns **all** posts regardless of status.
+
+**Query parameters**
+
+| Parameter | Type | Required | Notes |
+|---|---|---|---|
+| `available` | boolean | no | `true` → open positions only; `false` → closed/filled only; omit → all |
+
+**Recommended usage for seekers:** `GET /jobs?available=true`  
+**Recommended usage for employers reviewing their closed posts:** `GET /jobs?available=false`
 
 **Response `200 OK`**
 
@@ -135,19 +144,21 @@ Returns the full list of job posts.
 [
   {
     "postId": 1,
-    "jobTitle": "Senior Java Developer",
-    "jobDescription": "We are looking for a Senior Java Developer with 5+ years of experience...",
-    "jobRating": 4.2,
+    "jobTitle": "Senior Frontend Developer",
+    "jobDescription": "Senior React and TypeScript developer needed...",
+    "jobRating": 4.5,
     "hourlyRate": 75.00,
-    "employerUsername": "acme_corp"
+    "employerUsername": "techcorp",
+    "available": true
   },
   {
-    "postId": 2,
-    "jobTitle": "Junior React Developer",
-    "jobDescription": "Entry-level position for a React developer...",
-    "jobRating": 3.8,
+    "postId": 3,
+    "jobTitle": "Junior QA Engineer",
+    "jobDescription": "Entry-level QA engineer...",
+    "jobRating": 4.0,
     "hourlyRate": 35.00,
-    "employerUsername": null
+    "employerUsername": "techcorp",
+    "available": false
   }
 ]
 ```
@@ -159,13 +170,14 @@ Returns the full list of job posts.
 | `jobDescription` | string | Up to 1000 characters |
 | `jobRating` | double | 0.0–5.0 |
 | `hourlyRate` | double | USD per hour |
-| `employerUsername` | string \| null | Username of the posting employer; `null` for seed data with no employer assigned |
+| `employerUsername` | string \| null | Username of the posting employer; `null` if unassigned |
+| `available` | boolean | `true` = position open; `false` = closed / position filled |
 
 ---
 
 ### `POST /jobs`
 
-Creates a new job post. Currently accepts a raw `JobPost` entity body.
+Creates a new job post. New posts are open (`available: true`) by default.
 
 **Request body**
 
@@ -178,7 +190,46 @@ Creates a new job post. Currently accepts a raw `JobPost` entity body.
 }
 ```
 
-**Response `201 Created`** — returns the saved `JobPostResponse` with the generated `postId`.
+**Response `201 Created`** — returns the saved `JobPostResponse` with the generated `postId` and `available: true`.
+
+---
+
+### `PATCH /jobs/{id}/available`
+
+Opens or closes an existing job posting without modifying any other field.
+
+**Path parameter:** `id` — the `postId` of the job post.
+
+**Request body**
+
+```json
+{ "available": false }
+```
+
+**Response `200 OK`** — the full updated `JobPostResponse`.
+
+**Error responses**
+
+| Status | When |
+|---|---|
+| `401` | Missing or invalid JWT token |
+| `404` | No job post found with the given ID |
+
+**Example — mark a position as filled:**
+
+```
+PATCH /jobs/3/available
+{ "available": false }
+→ 200 { "postId": 3, "jobTitle": "Junior QA Engineer", ..., "available": false }
+```
+
+**Example — re-open a closed position:**
+
+```
+PATCH /jobs/3/available
+{ "available": true }
+→ 200 { "postId": 3, "jobTitle": "Junior QA Engineer", ..., "available": true }
+```
 
 ---
 
@@ -389,9 +440,18 @@ interface JobPostResponse {
   postId: number;
   jobTitle: string;
   jobDescription: string;
-  jobRating: number;        // 0.0–5.0
-  hourlyRate: number;       // USD
+  jobRating: number;              // 0.0–5.0
+  hourlyRate: number;             // USD per hour
   employerUsername: string | null;
+  available: boolean;             // true = open; false = closed/filled
+}
+```
+
+### `UpdateJobAvailabilityRequest`
+
+```ts
+interface UpdateJobAvailabilityRequest {
+  available: boolean;   // true = reopen; false = close/fill
 }
 ```
 
@@ -442,8 +502,8 @@ POST /auth/register   { username, password, role: "SEEKER", firstName, lastName 
 
 Store token in localStorage.
 
-GET /jobs             Authorization: Bearer <token>
-  → 200 [ { postId, jobTitle, ... }, ... ]
+GET /jobs?available=true   Authorization: Bearer <token>
+  → 200 [ { postId, jobTitle, ..., available: true }, ... ]   // only open positions
 
 GET /users/seekers/me Authorization: Bearer <token>
   → 200 { id, username, name, lastName, ... }
@@ -461,7 +521,12 @@ POST /users/companies Authorization: Bearer <token>
 
 POST /jobs            Authorization: Bearer <token>
   { jobTitle, jobDescription, jobRating, hourlyRate }
-  → 201 { postId, jobTitle, ... }
+  → 201 { postId, jobTitle, ..., available: true }     // new posts are open by default
+
+// Close the position once it's filled:
+PATCH /jobs/{postId}/available   Authorization: Bearer <token>
+  { "available": false }
+  → 200 { postId, ..., available: false }
 ```
 
 ### Flow 3 — Returning user logs in
@@ -481,6 +546,7 @@ POST /auth/login      { username, password }
 - **Token expiry:** `expiresIn` is in **milliseconds**. Compute expiry as `Date.now() + expiresIn`.
 - **Role-based rendering:** Use the `role` field from `TokenResponse` to decide which profile endpoint to call (`/seekers/me` vs `/employers/me`) and which UI to display.
 - **`/me` endpoints vs `/{id}` endpoints:** Use `/me` for the authenticated user's own data (token carries the identity). Use `/{id}` to look up other users' public profiles.
+- **Job availability:** Always call `GET /jobs?available=true` in the seeker browse view — this filters out closed/filled positions server-side. The `available` flag is also included in every `JobPostResponse` so you can do client-side checks or render a "Closed" badge when displaying all posts (e.g. in an employer dashboard). To close a position, call `PATCH /jobs/{id}/available` with `{ "available": false }`.
 - **CORS:** The backend allows requests from `http://localhost:3000` by default. Change `cors.allowed-origins` in `application.properties` for other origins.
 - **Timestamps:** All `LocalDateTime` fields are serialized as ISO-8601 strings in UTC (e.g. `"2024-01-15T10:30:00"`).
 - **Interactive testing:** Open `http://localhost:9080/swagger-ui/index.html`, click **Authorize**, paste your JWT, and try every endpoint from the browser.

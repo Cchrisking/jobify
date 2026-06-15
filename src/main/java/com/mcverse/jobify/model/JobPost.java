@@ -24,6 +24,9 @@ public class JobPost {
     private double jobRating;
     private double hourlyRate;
 
+    @Column(nullable = false)
+    private boolean available = true;
+
     protected JobPost() {}
 
     public JobPost(String jobTitle, String jobDescription, double jobRating, double hourlyRate) {
@@ -31,6 +34,7 @@ public class JobPost {
         this.jobDescription = jobDescription;
         this.jobRating = jobRating;
         this.hourlyRate = hourlyRate;
+        this.available = true;
     }
 
     public Integer getPostId()         { return postId; }
@@ -38,12 +42,14 @@ public class JobPost {
     public String getJobDescription()  { return jobDescription; }
     public double getJobRating()       { return jobRating; }
     public double getHourlyRate()      { return hourlyRate; }
+    public boolean isAvailable()       { return available; }
 
     public void setPostId(Integer postId)                { this.postId = postId; }
     public void setJobTitle(String jobTitle)             { this.jobTitle = jobTitle; }
     public void setJobDescription(String jobDescription) { this.jobDescription = jobDescription; }
     public void setJobRating(double jobRating)           { this.jobRating = jobRating; }
     public void setHourlyRate(double hourlyRate)         { this.hourlyRate = hourlyRate; }
+    public void setAvailable(boolean available)          { this.available = available; }
     public Employer getEmployer()                        { return employer; }
     public void setEmployer(Employer employer)           { this.employer = employer; }
 }
