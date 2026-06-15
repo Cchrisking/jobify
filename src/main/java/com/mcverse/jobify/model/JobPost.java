@@ -1,5 +1,6 @@
 package com.mcverse.jobify.model;
 
+import com.mcverse.jobify.user.model.Employer;
 import jakarta.persistence.*;
 
 @Entity
@@ -9,6 +10,10 @@ public class JobPost {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer postId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "employer_id")
+    private Employer employer;
 
     @Column(nullable = false)
     private String jobTitle;
@@ -39,4 +44,6 @@ public class JobPost {
     public void setJobDescription(String jobDescription) { this.jobDescription = jobDescription; }
     public void setJobRating(double jobRating)           { this.jobRating = jobRating; }
     public void setHourlyRate(double hourlyRate)         { this.hourlyRate = hourlyRate; }
+    public Employer getEmployer()                        { return employer; }
+    public void setEmployer(Employer employer)           { this.employer = employer; }
 }

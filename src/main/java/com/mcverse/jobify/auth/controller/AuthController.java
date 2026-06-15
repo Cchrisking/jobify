@@ -4,6 +4,7 @@ import com.mcverse.jobify.auth.dto.LoginRequest;
 import com.mcverse.jobify.auth.dto.RegisterRequest;
 import com.mcverse.jobify.auth.dto.TokenResponse;
 import com.mcverse.jobify.auth.service.AuthService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -17,7 +18,7 @@ public class AuthController {
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public TokenResponse register(@RequestBody RegisterRequest request) {
+    public TokenResponse register(@Valid @RequestBody RegisterRequest request) {
         return authService.register(request);
     }
 

@@ -2,34 +2,50 @@ package com.mcverse.jobify.user.model;
 
 import com.mcverse.jobify.common.validation.ValidSalaryRange;
 import com.mcverse.jobify.model.EmploymentType;
+import jakarta.persistence.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Entity
+@Table(name = "job_preferences")
 @ValidSalaryRange
 public class JobPreferences {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
     private String preferredJobTitle;
     private String locationPreferences;
     private double minSalaryExpectation;
     private double maxSalaryExpectation;
+
+    @Enumerated(EnumType.STRING)
     private EmploymentType employmentType;
+
     private String workingHours;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "job_preferences_skills", joinColumns = @JoinColumn(name = "preferences_id"))
+    @Column(name = "skill")
     private List<String> skills;
+
     private String experienceLevel;
 
     public JobPreferences() {
         this.skills = new ArrayList<>();
     }
 
-    public String getPreferredJobTitle()       { return preferredJobTitle; }
-    public String getLocationPreferences()     { return locationPreferences; }
-    public double getMinSalaryExpectation()    { return minSalaryExpectation; }
-    public double getMaxSalaryExpectation()    { return maxSalaryExpectation; }
-    public EmploymentType getEmploymentType()  { return employmentType; }
-    public String getWorkingHours()            { return workingHours; }
-    public List<String> getSkills()            { return skills; }
-    public String getExperienceLevel()         { return experienceLevel; }
+    public String getId()                        { return id; }
+    public String getPreferredJobTitle()         { return preferredJobTitle; }
+    public String getLocationPreferences()       { return locationPreferences; }
+    public double getMinSalaryExpectation()      { return minSalaryExpectation; }
+    public double getMaxSalaryExpectation()      { return maxSalaryExpectation; }
+    public EmploymentType getEmploymentType()    { return employmentType; }
+    public String getWorkingHours()              { return workingHours; }
+    public List<String> getSkills()              { return skills; }
+    public String getExperienceLevel()           { return experienceLevel; }
 
     public void setPreferredJobTitle(String preferredJobTitle)       { this.preferredJobTitle = preferredJobTitle; }
     public void setLocationPreferences(String locationPreferences)   { this.locationPreferences = locationPreferences; }

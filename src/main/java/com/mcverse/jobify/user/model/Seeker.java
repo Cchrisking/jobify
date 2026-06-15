@@ -1,24 +1,27 @@
 package com.mcverse.jobify.user.model;
 
-import java.util.ArrayList;
+import jakarta.persistence.*;
 
+@Entity
+@Table(name = "seekers")
 public class Seeker extends User {
 
     private boolean isIndependent;
-    private ArrayList<Cv> cv;
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "job_preferences_id")
     private JobPreferences jobPreferences;
 
-    public Seeker(String id, String name, String lastName, String password, boolean isIndependent) {
-        super(id, name, lastName, password);
+    protected Seeker() {}
+
+    public Seeker(String name, String lastName, String username, boolean isIndependent) {
+        super(name, lastName, username);
         this.isIndependent = isIndependent;
-        this.cv = new ArrayList<>();
     }
 
-    public boolean isIndependent() { return isIndependent; }
+    public boolean isIndependent()             { return isIndependent; }
+    public JobPreferences getJobPreferences()  { return jobPreferences; }
 
-    public ArrayList<Cv> getCv()                 { return cv; }
-    public JobPreferences getJobPreferences()     { return jobPreferences; }
-
-    public void addCv(Cv cv)                              { this.cv.add(cv); }
-    public void setJobPreferences(JobPreferences jobPreferences) { this.jobPreferences = jobPreferences; }
+    public void setIndependent(boolean isIndependent)              { this.isIndependent = isIndependent; }
+    public void setJobPreferences(JobPreferences jobPreferences)   { this.jobPreferences = jobPreferences; }
 }
