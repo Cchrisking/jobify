@@ -153,10 +153,10 @@ Updated constructor signature from `Date` to `LocalDateTime` to match the parent
 | 3 | `JobController` | CORS hardcoded to `http://localhost:3000` | Needs `SecurityConfig` / `WebMvcConfigurer` |
 | 4 | Whole project | No persistence — all data lives in-memory `ArrayList` | Requires Spring Data JPA + database |
 | 5 | `user/model/JobPreferences.java` | All fields are `String`; should be typed (`List<String>` for skills, numeric type for salary) | Design decision |
-| 6 | `user/model/Seeker.java` | `getStatus()` returns `isIndependent` — name does not describe what it returns | Minor rename: `isIndependent()` |
-| 7 | `job/model/Job.java` | No `EmploymentType` field despite the enum existing | Feature gap |
-| 8 | Root `pom.xml` vs `jobify/pom.xml` | Nested stale `pom.xml` (Spring Boot 3.4.5, Java 24) should be deleted | Confirm with team |
-| 9 | `jobify/jobify/` nested directory | Contains a second copy of `JobifyApplication.java` | Confirm if it is a stale scaffold copy |
+| 6 | `user/model/Seeker.java` | ~~`getStatus()` returns `isIndependent` — name does not describe what it returns~~ | **Fixed** — renamed to `isIndependent()` |
+| 7 | `job/model/Job.java` | ~~No `EmploymentType` field despite the enum existing~~ | **Fixed** — added `employmentType` field, getter, setter, and constructor param |
+| 8 | Root `pom.xml` vs `jobify/pom.xml` | ~~Nested stale `pom.xml` (Spring Boot 3.4.5, Java 24) should be deleted~~ | **Fixed** — `jobify/` directory removed from git |
+| 9 | `jobify/jobify/` nested directory | ~~Contains a second copy of `JobifyApplication.java`~~ | **Fixed** — deleted with `git rm -r jobify/` |
 
 ---
 

@@ -14,8 +14,7 @@ public class Seeker extends User {
         this.cv = new ArrayList<>();
     }
 
-    /** Returns whether the seeker is working independently (freelancer/self-employed). */
-    public boolean getStatus() { return isIndependent; }
+    public boolean isIndependent() { return isIndependent; }
 
     public ArrayList<Cv> getCv()                 { return cv; }
     public JobPreferences getJobPreferences()     { return jobPreferences; }
