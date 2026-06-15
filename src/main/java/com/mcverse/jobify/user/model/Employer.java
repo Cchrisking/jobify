@@ -1,5 +1,6 @@
 package com.mcverse.jobify.user.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.mcverse.jobify.model.JobPost;
 import jakarta.persistence.*;
 
@@ -14,6 +15,7 @@ public class Employer extends User {
     @JoinColumn(name = "company_id")
     private Company company;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "employer", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<JobPost> jobPosts;
 

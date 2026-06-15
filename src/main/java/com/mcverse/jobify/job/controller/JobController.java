@@ -1,5 +1,6 @@
 package com.mcverse.jobify.job.controller;
 
+import com.mcverse.jobify.job.dto.JobPostResponse;
 import com.mcverse.jobify.model.JobPost;
 import com.mcverse.jobify.job.service.JobService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,13 +17,13 @@ public class JobController {
     private JobService jobService;
 
     @GetMapping
-    public List<JobPost> getAllJobs() {
+    public List<JobPostResponse> getAllJobs() {
         return jobService.getJobs();
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public JobPost addJob(@RequestBody JobPost jobPost) {
+    public JobPostResponse addJob(@RequestBody JobPost jobPost) {
         return jobService.addJob(jobPost);
     }
 }
