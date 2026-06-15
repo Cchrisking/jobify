@@ -121,7 +121,8 @@ Authenticates an existing account.
 
 ## Jobs endpoints `/jobs/**`
 
-> **All endpoints require** `Authorization: Bearer <token>`.
+> `GET /jobs` — **public, no Authorization header required.**  
+> `POST /jobs` and `PATCH /jobs/{id}/available` — require `Authorization: Bearer <token>`.
 
 ---
 

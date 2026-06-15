@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -30,15 +31,16 @@ public class JobController {
 
     @Operation(
             summary = "List job posts",
-            description = "Returns job postings. Pass `available=true` to show only open positions " +
-                    "(recommended for seekers). Pass `available=false` to see closed/filled posts. " +
+            description = "Public endpoint — no authentication required. " +
+                    "Pass `available=true` to show only open positions (recommended for visitors and seekers). " +
+                    "Pass `available=false` to see closed/filled posts. " +
                     "Omit the parameter to return all posts regardless of status."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "List of job posts (may be empty)",
                     content = @Content(array = @ArraySchema(schema = @Schema(implementation = JobPostResponse.class)))),
-            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token"),
     })
+    @SecurityRequirements
     @GetMapping
     public List<JobPostResponse> getAllJobs(
             @Parameter(description = "Filter by availability — true = open only, false = closed only, omit = all",
