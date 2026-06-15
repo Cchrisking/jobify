@@ -1,28 +1,40 @@
 package com.mcverse.jobify.model;
 
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "job_posts")
 public class JobPost {
 
-    private int postId;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer postId;
+
+    @Column(nullable = false)
     private String jobTitle;
+
+    @Column(length = 1000)
     private String jobDescription;
+
     private double jobRating;
     private double hourlyRate;
 
-    public JobPost(int postId, String jobTitle, String jobDescription, double jobRating, double hourlyRate) {
-        this.postId = postId;
+    protected JobPost() {}
+
+    public JobPost(String jobTitle, String jobDescription, double jobRating, double hourlyRate) {
         this.jobTitle = jobTitle;
         this.jobDescription = jobDescription;
         this.jobRating = jobRating;
         this.hourlyRate = hourlyRate;
     }
 
-    public int getPostId()             { return postId; }
+    public Integer getPostId()         { return postId; }
     public String getJobTitle()        { return jobTitle; }
     public String getJobDescription()  { return jobDescription; }
     public double getJobRating()       { return jobRating; }
     public double getHourlyRate()      { return hourlyRate; }
 
-    public void setPostId(int postId)                    { this.postId = postId; }
+    public void setPostId(Integer postId)                { this.postId = postId; }
     public void setJobTitle(String jobTitle)             { this.jobTitle = jobTitle; }
     public void setJobDescription(String jobDescription) { this.jobDescription = jobDescription; }
     public void setJobRating(double jobRating)           { this.jobRating = jobRating; }

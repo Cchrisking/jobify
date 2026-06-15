@@ -148,11 +148,11 @@ Updated constructor signature from `Date` to `LocalDateTime` to match the parent
 
 | # | Location | Issue | Reason deferred |
 |---|---|---|---|
-| 1 | All `auth/`, `config/`, `common/` | 18 stub files contain only a package declaration | Full feature implementation required |
-| 2 | `auth/controller/AuthController.java` | Empty class body (not just a stub) | Needs full auth implementation |
-| 3 | `JobController` | CORS hardcoded to `http://localhost:3000` | Needs `SecurityConfig` / `WebMvcConfigurer` |
-| 4 | Whole project | No persistence — all data lives in-memory `ArrayList` | Requires Spring Data JPA + database |
-| 5 | `user/model/JobPreferences.java` | All fields are `String`; should be typed (`List<String>` for skills, numeric type for salary) | Design decision |
+| 1 | `common/exception/`, `common/response/`, `common/validation/`, `config/` | ~~18 stub files~~ | **Fixed** — exceptions (ResourceNotFoundException 404, BusinessRuleException 422, LicenseValidationException 403), GlobalExceptionHandler (`@RestControllerAdvice`), ApiResponse\<T\> + PagedResponse\<T\> records, ValidSalaryRange constraint + SalaryRangeValidator, OpenApiConfig (springdoc + JWT Bearer scheme). ValidGpuRamCombo deleted (wrong domain). |
+| 2 | `auth/controller/AuthController.java` | ~~Empty class body~~ | **Fixed** — implemented in security feature commit |
+| 3 | `JobController` | ~~CORS hardcoded~~ | **Fixed** — CORS moved to SecurityConfig, driven by `cors.allowed-origins` property |
+| 4 | Whole project | ~~No persistence — in-memory ArrayList~~ | **Fixed** — Spring Data JPA + H2 (file-based dev, in-memory for tests). `JobPost` → `@Entity`. `JobRepo` → `JpaRepository<JobPost, Integer>`. `AppUser` JPA entity + `AuthUserRepository` for auth (separated from domain User). `DataInitializer` seeds on first start. `JobService` uses `findAll()` / `save()`. H2 console at `/h2-console`. Swagger UI at `/swagger-ui/index.html`. |
+| 5 | `user/model/JobPreferences.java` | ~~All fields `String`~~ | **Fixed** — `salaryExpectations: String` → `minSalaryExpectation + maxSalaryExpectation: double`; `desiredJobType: String` → `employmentType: EmploymentType`; `skills: String` → `List<String>`; `jobPreferences: String` → `preferredJobTitle: String`; annotated `@ValidSalaryRange`. |
 | 6 | `user/model/Seeker.java` | ~~`getStatus()` returns `isIndependent` — name does not describe what it returns~~ | **Fixed** — renamed to `isIndependent()` |
 | 7 | `job/model/Job.java` | ~~No `EmploymentType` field despite the enum existing~~ | **Fixed** — added `employmentType` field, getter, setter, and constructor param |
 | 8 | Root `pom.xml` vs `jobify/pom.xml` | ~~Nested stale `pom.xml` (Spring Boot 3.4.5, Java 24) should be deleted~~ | **Fixed** — `jobify/` directory removed from git |

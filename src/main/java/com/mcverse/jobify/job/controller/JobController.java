@@ -22,7 +22,7 @@ public class JobController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public void addJob(@RequestBody JobPost jobPost) {
-        jobService.addJob(jobPost);
+    public JobPost addJob(@RequestBody JobPost jobPost) {
+        return jobService.addJob(jobPost);
     }
 }

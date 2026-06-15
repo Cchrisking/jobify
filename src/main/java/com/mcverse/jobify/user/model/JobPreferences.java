@@ -1,28 +1,42 @@
 package com.mcverse.jobify.user.model;
 
+import com.mcverse.jobify.common.validation.ValidSalaryRange;
+import com.mcverse.jobify.model.EmploymentType;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@ValidSalaryRange
 public class JobPreferences {
 
-    private String jobPreferences;
+    private String preferredJobTitle;
     private String locationPreferences;
-    private String salaryExpectations;
-    private String desiredJobType;
+    private double minSalaryExpectation;
+    private double maxSalaryExpectation;
+    private EmploymentType employmentType;
     private String workingHours;
-    private String skills;
+    private List<String> skills;
     private String experienceLevel;
 
-    public String getJobPreferences()      { return jobPreferences; }
-    public String getLocationPreferences() { return locationPreferences; }
-    public String getSalaryExpectations()  { return salaryExpectations; }
-    public String getDesiredJobType()      { return desiredJobType; }
-    public String getWorkingHours()        { return workingHours; }
-    public String getSkills()              { return skills; }
-    public String getExperienceLevel()     { return experienceLevel; }
+    public JobPreferences() {
+        this.skills = new ArrayList<>();
+    }
 
-    public void setJobPreferences(String jobPreferences)           { this.jobPreferences = jobPreferences; }
-    public void setLocationPreferences(String locationPreferences) { this.locationPreferences = locationPreferences; }
-    public void setSalaryExpectations(String salaryExpectations)   { this.salaryExpectations = salaryExpectations; }
-    public void setDesiredJobType(String desiredJobType)           { this.desiredJobType = desiredJobType; }
-    public void setWorkingHours(String workingHours)               { this.workingHours = workingHours; }
-    public void setSkills(String skills)                           { this.skills = skills; }
-    public void setExperienceLevel(String experienceLevel)         { this.experienceLevel = experienceLevel; }
+    public String getPreferredJobTitle()       { return preferredJobTitle; }
+    public String getLocationPreferences()     { return locationPreferences; }
+    public double getMinSalaryExpectation()    { return minSalaryExpectation; }
+    public double getMaxSalaryExpectation()    { return maxSalaryExpectation; }
+    public EmploymentType getEmploymentType()  { return employmentType; }
+    public String getWorkingHours()            { return workingHours; }
+    public List<String> getSkills()            { return skills; }
+    public String getExperienceLevel()         { return experienceLevel; }
+
+    public void setPreferredJobTitle(String preferredJobTitle)       { this.preferredJobTitle = preferredJobTitle; }
+    public void setLocationPreferences(String locationPreferences)   { this.locationPreferences = locationPreferences; }
+    public void setMinSalaryExpectation(double minSalaryExpectation) { this.minSalaryExpectation = minSalaryExpectation; }
+    public void setMaxSalaryExpectation(double maxSalaryExpectation) { this.maxSalaryExpectation = maxSalaryExpectation; }
+    public void setEmploymentType(EmploymentType employmentType)     { this.employmentType = employmentType; }
+    public void setWorkingHours(String workingHours)                 { this.workingHours = workingHours; }
+    public void setSkills(List<String> skills)                       { this.skills = skills; }
+    public void setExperienceLevel(String experienceLevel)           { this.experienceLevel = experienceLevel; }
 }

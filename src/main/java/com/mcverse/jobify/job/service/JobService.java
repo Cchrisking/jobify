@@ -14,10 +14,10 @@ public class JobService {
     private JobRepo repo;
 
     public List<JobPost> getJobs() {
-        return repo.getJobs();
+        return repo.findAll();
     }
 
-    public void addJob(JobPost jobPost) {
-        repo.addJob(jobPost);
+    public JobPost addJob(JobPost jobPost) {
+        return repo.save(jobPost);
     }
 }

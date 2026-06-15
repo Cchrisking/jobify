@@ -1,6 +1,9 @@
 package com.mcverse.jobify.auth.security;
 
+import com.mcverse.jobify.auth.model.AppUser;
 import com.mcverse.jobify.auth.model.Role;
+import com.mcverse.jobify.auth.repository.AuthUserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -9,34 +12,35 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
 
-    private final Map<String, UserDetails> store = new ConcurrentHashMap<>();
+    @Autowired
+    private AuthUserRepository userRepo;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        UserDetails user = store.get(username);
-        if (user == null) {
-            throw new UsernameNotFoundException("User not found: " + username);
-        }
-        return user;
+        AppUser user = userRepo.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+        return toUserDetails(user);
     }
 
     public void save(String username, String encodedPassword, Role role) {
-        if (store.containsKey(username)) {
+        if (userRepo.existsByUsername(username)) {
             throw new IllegalArgumentException("Username already taken: " + username);
         }
-        store.put(username, User.withUsername(username)
-                .password(encodedPassword)
-                .authorities(new SimpleGrantedAuthority("ROLE_" + role.name()))
-                .build());
+        userRepo.save(new AppUser(username, encodedPassword, role));
     }
 
     public boolean exists(String username) {
-        return store.containsKey(username);
+        return userRepo.existsByUsername(username);
+    }
+
+    private UserDetails toUserDetails(AppUser user) {
+        return User.withUsername(user.getUsername())
+                .password(user.getPassword())
+                .authorities(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
+                .build();
     }
 }
