@@ -13,8 +13,8 @@ public record RegisterRequest(
         @Schema(description = "Password — minimum 8 characters recommended", example = "s3cur3P@ss")
         @NotBlank String password,
 
-        @Schema(description = "Account role — determines which profile type is created", example = "SEEKER",
-                allowableValues = {"SEEKER", "EMPLOYER"})
+        @Schema(description = "SEEKER or EMPLOYER only — ADMIN is seeded and cannot be self-registered",
+                example = "SEEKER", allowableValues = {"SEEKER", "EMPLOYER"})
         @NotNull Role role,
 
         @Schema(description = "First name", example = "Jane")

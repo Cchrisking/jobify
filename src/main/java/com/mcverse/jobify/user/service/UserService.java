@@ -25,9 +25,10 @@ public class UserService {
     public void createProfile(String username, String firstName, String lastName, Role role) {
         if (role == Role.SEEKER) {
             seekerRepo.save(new Seeker(firstName, lastName, username, false));
-        } else {
+        } else if (role == Role.EMPLOYER) {
             employerRepo.save(new Employer(firstName, lastName, username));
         }
+        // ADMIN has no domain profile
     }
 
     public SeekerResponse getSeekerByUsername(String username) {

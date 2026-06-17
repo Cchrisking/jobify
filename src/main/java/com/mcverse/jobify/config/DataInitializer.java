@@ -31,6 +31,9 @@ public class DataInitializer implements ApplicationRunner {
     }
 
     private void seedUsers() {
+        // ── Admin ─────────────────────────────────────────────────────────────
+        createUser("admin", "Admin", "User", Role.ADMIN);
+
         // ── Seekers ───────────────────────────────────────────────────────────
         createUser("alice_s",  "Alice",  "Johnson",  Role.SEEKER);
         createUser("bob_s",    "Bob",    "Williams", Role.SEEKER);

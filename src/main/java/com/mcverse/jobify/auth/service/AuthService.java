@@ -4,6 +4,7 @@ import com.mcverse.jobify.auth.dto.LoginRequest;
 import com.mcverse.jobify.auth.dto.RegisterRequest;
 import com.mcverse.jobify.auth.dto.TokenResponse;
 import com.mcverse.jobify.auth.model.AppUser;
+import com.mcverse.jobify.auth.model.Role;
 import com.mcverse.jobify.auth.repository.AuthUserRepository;
 import com.mcverse.jobify.auth.security.JwtService;
 import com.mcverse.jobify.auth.security.UserDetailsServiceImpl;
@@ -30,6 +31,9 @@ public class AuthService {
 
     @Transactional
     public TokenResponse register(RegisterRequest request) {
+        if (request.role() == Role.ADMIN) {
+            throw new IllegalArgumentException("Cannot self-register as ADMIN.");
+        }
         userDetailsService.save(request.username(), passwordEncoder.encode(request.password()), request.role());
         userService.createProfile(request.username(), request.firstName(), request.lastName(), request.role());
         UserDetails userDetails = userDetailsService.loadUserByUsername(request.username());
