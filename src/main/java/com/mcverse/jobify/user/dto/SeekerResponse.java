@@ -3,6 +3,7 @@ package com.mcverse.jobify.user.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Schema(description = "Job seeker profile")
 public record SeekerResponse(
@@ -22,5 +23,20 @@ public record SeekerResponse(
         LocalDateTime creationDate,
 
         @Schema(description = "Whether the seeker works as an independent contractor", example = "false")
-        boolean isIndependent
+        boolean isIndependent,
+
+        @Schema(description = "The seeker's uploaded resume, if any", nullable = true)
+        CvResponse cv,
+
+        @Schema(description = "Education entries")
+        List<EducationResponse> educations,
+
+        @Schema(description = "Certification entries")
+        List<CertificationResponse> certifications,
+
+        @Schema(description = "Professional experience entries")
+        List<ProfessionalExperienceResponse> experiences,
+
+        @Schema(description = "Skills")
+        List<SeekerSkillResponse> skills
 ) {}

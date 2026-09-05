@@ -14,6 +14,7 @@ public abstract class File {
     private String fileUrl;
     private String fileType;
     private LocalDateTime fileDate;
+    private String originalFileName;
 
     protected File() {}
 
@@ -23,12 +24,14 @@ public abstract class File {
         this.fileDate = fileDate;
     }
 
-    public String getId()              { return id; }
-    public String getFileUrl()         { return fileUrl; }
-    public String getFileType()        { return fileType; }
-    public LocalDateTime getFileDate() { return fileDate; }
+    public String getId()               { return id; }
+    public String getFileUrl()          { return fileUrl; }
+    public String getFileType()         { return fileType; }
+    public LocalDateTime getFileDate()  { return fileDate; }
+    public String getOriginalFileName() { return originalFileName; }
 
-    public void setFileUrl(String fileUrl)          { this.fileUrl = fileUrl; }
-    public void setFileType(String fileType)        { this.fileType = fileType; }
-    public void setFileDate(LocalDateTime fileDate) { this.fileDate = fileDate; }
+    public void setFileUrl(String fileUrl)                   { this.fileUrl = fileUrl; }
+    public void setFileType(String fileType)                 { this.fileType = fileType; }
+    public void setFileDate(LocalDateTime fileDate)           { this.fileDate = fileDate; }
+    public void setOriginalFileName(String originalFileName) { this.originalFileName = originalFileName; }
 }

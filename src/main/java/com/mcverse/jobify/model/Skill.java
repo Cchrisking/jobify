@@ -1,23 +1,31 @@
 package com.mcverse.jobify.model;
 
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "skills")
 public class Skill {
 
-    private int skillId;
-    private String skillName;
-    private String skillDescription;
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
-    public Skill(int skillId, String skillName, String skillDescription) {
-        this.skillId = skillId;
-        this.skillName = skillName;
-        this.skillDescription = skillDescription;
+    @Column(unique = true, nullable = false)
+    private String name;
+
+    private String category;
+
+    protected Skill() {}
+
+    public Skill(String name, String category) {
+        this.name = name;
+        this.category = category;
     }
 
-    public int getSkillId()              { return skillId; }
-    public String getSkillName()         { return skillName; }
-    public String getSkillDescription()  { return skillDescription; }
+    public String getId()       { return id; }
+    public String getName()     { return name; }
+    public String getCategory() { return category; }
 
-    public void setSkillId(int skillId)                    { this.skillId = skillId; }
-    public void setSkillName(String skillName)             { this.skillName = skillName; }
-    public void setSkillDescription(String skillDescription) { this.skillDescription = skillDescription; }
+    public void setName(String name)         { this.name = name; }
+    public void setCategory(String category) { this.category = category; }
 }
-
