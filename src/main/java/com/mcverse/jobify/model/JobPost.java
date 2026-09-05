@@ -3,6 +3,10 @@ package com.mcverse.jobify.model;
 import com.mcverse.jobify.user.model.Employer;
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "job_posts")
 public class JobPost {
@@ -11,6 +15,8 @@ public class JobPost {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer postId;
 
+    private LocalDateTime createdAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employer_id")
     private Employer employer;
@@ -18,14 +24,30 @@ public class JobPost {
     @Column(nullable = false)
     private String jobTitle;
 
-    @Column(length = 1000)
+    @Lob
     private String jobDescription;
 
     private double jobRating;
     private double hourlyRate;
 
+    private String location;
+
+    @Enumerated(EnumType.STRING)
+    private WorkMode workMode;
+
+    @Enumerated(EnumType.STRING)
+    private EmploymentType employmentType;
+
     @Column(nullable = false)
     private boolean available = true;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "job_required_skills",
+            joinColumns = @JoinColumn(name = "job_post_id"),
+            inverseJoinColumns = @JoinColumn(name = "skill_id")
+    )
+    private List<Skill> requiredSkills = new ArrayList<>();
 
     protected JobPost() {}
 
@@ -35,9 +57,11 @@ public class JobPost {
         this.jobRating = jobRating;
         this.hourlyRate = hourlyRate;
         this.available = true;
+        this.createdAt = LocalDateTime.now();
     }
 
     public Integer getPostId()         { return postId; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
     public String getJobTitle()        { return jobTitle; }
     public String getJobDescription()  { return jobDescription; }
     public double getJobRating()       { return jobRating; }
@@ -52,4 +76,12 @@ public class JobPost {
     public void setAvailable(boolean available)          { this.available = available; }
     public Employer getEmployer()                        { return employer; }
     public void setEmployer(Employer employer)           { this.employer = employer; }
+    public String getLocation()                          { return location; }
+    public void setLocation(String location)              { this.location = location; }
+    public WorkMode getWorkMode()                         { return workMode; }
+    public void setWorkMode(WorkMode workMode)            { this.workMode = workMode; }
+    public EmploymentType getEmploymentType()             { return employmentType; }
+    public void setEmploymentType(EmploymentType employmentType) { this.employmentType = employmentType; }
+    public List<Skill> getRequiredSkills()                { return requiredSkills; }
+    public void setRequiredSkills(List<Skill> requiredSkills) { this.requiredSkills = requiredSkills; }
 }

@@ -16,6 +16,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -50,6 +52,23 @@ public class JobController {
     }
 
     @Operation(
+            summary = "Get a single job post",
+            description = "Public endpoint — no authentication required."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "The job post",
+                    content = @Content(schema = @Schema(implementation = JobPostResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Job post not found"),
+    })
+    @SecurityRequirements
+    @GetMapping("/{id}")
+    public JobPostResponse getJob(
+            @Parameter(description = "Job post ID", example = "3")
+            @PathVariable Integer id) {
+        return jobService.getJobById(id);
+    }
+
+    @Operation(
             summary = "Create a new job post",
             description = "Persists a new JobPost. Returns the saved post with its generated ID. " +
                     "New posts are open (available=true) by default."
@@ -61,8 +80,8 @@ public class JobController {
     })
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public JobPostResponse addJob(@RequestBody JobPost jobPost) {
-        return jobService.addJob(jobPost);
+    public JobPostResponse addJob(@AuthenticationPrincipal UserDetails principal, @RequestBody JobPost jobPost) {
+        return jobService.addJob(jobPost, principal.getUsername());
     }
 
     @Operation(
