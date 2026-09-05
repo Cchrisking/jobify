@@ -4,9 +4,6 @@ import com.mcverse.jobify.common.validation.ValidSalaryRange;
 import com.mcverse.jobify.model.EmploymentType;
 import jakarta.persistence.*;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Entity
 @Table(name = "job_preferences")
 @ValidSalaryRange
@@ -26,16 +23,9 @@ public class JobPreferences {
 
     private String workingHours;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "job_preferences_skills", joinColumns = @JoinColumn(name = "preferences_id"))
-    @Column(name = "skill")
-    private List<String> skills;
-
     private String experienceLevel;
 
-    public JobPreferences() {
-        this.skills = new ArrayList<>();
-    }
+    public JobPreferences() {}
 
     public String getId()                        { return id; }
     public String getPreferredJobTitle()         { return preferredJobTitle; }
@@ -44,7 +34,6 @@ public class JobPreferences {
     public double getMaxSalaryExpectation()      { return maxSalaryExpectation; }
     public EmploymentType getEmploymentType()    { return employmentType; }
     public String getWorkingHours()              { return workingHours; }
-    public List<String> getSkills()              { return skills; }
     public String getExperienceLevel()           { return experienceLevel; }
 
     public void setPreferredJobTitle(String preferredJobTitle)       { this.preferredJobTitle = preferredJobTitle; }
@@ -53,6 +42,5 @@ public class JobPreferences {
     public void setMaxSalaryExpectation(double maxSalaryExpectation) { this.maxSalaryExpectation = maxSalaryExpectation; }
     public void setEmploymentType(EmploymentType employmentType)     { this.employmentType = employmentType; }
     public void setWorkingHours(String workingHours)                 { this.workingHours = workingHours; }
-    public void setSkills(List<String> skills)                       { this.skills = skills; }
     public void setExperienceLevel(String experienceLevel)           { this.experienceLevel = experienceLevel; }
 }
