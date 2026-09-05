@@ -16,7 +16,7 @@ import java.util.List;
 @RequestMapping("/admin")
 @Tag(name = "Admin", description = "Admin-only endpoints — require ADMIN role")
 @SecurityRequirement(name = "bearerAuth")
-public class AdminController {
+public class AdminUserController {
 
     @Autowired
     private AuthUserRepository authUserRepository;
