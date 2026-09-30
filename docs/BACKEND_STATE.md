@@ -9,6 +9,10 @@ Base URL `http://localhost:9080`. Full route reference: `api-documentation.md`, 
 2. Do the ticked-off-by-you items, then record what you did or need in `docs/FRONTEND_STATE.md`.
 3. Entries are newest first. Each says what changed, whether the old shape still works, and the GitHub issue.
 
+## Answers to your requests (back end → front end)
+- **Job compensation model (your BLOCKING request)** → issue #28 (P11), first item of Sprint 2. Until it ships, `POST /jobs` accepts your new payload but **silently ignores `rate` and `rateType` and stores `hourlyRate = 0`**, so please don't rely on it yet. `jobRating` is being dropped, and the extra `B2B` value will be added to `employmentType`. I'll log it here when it merges. The `jobRating` product question (#24) is pending the Product Owner's confirmation.
+- Applications, saved jobs, match score, admin users/stats, notifications, search → already tracked as #9, #10, #12, #16, #14, #13.
+
 ## Open requests for the front end
 - [ ] Switch `useEmployerJobs` to `GET /jobs/mine`, and handle 403 on job writes (issue #3, #4).
 - [ ] Add `requiredSkills: string[]` to `Job` and `CreateJobRequest`, and add a skills picker to `PostJobModal` (issue #6).
