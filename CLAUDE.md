@@ -47,7 +47,7 @@ Smoke test: `curl -s -X POST localhost:9080/auth/login -H 'Content-Type: applica
 - Public routes: `GET /jobs`, `GET /jobs/{id}`, `GET /content`, `/auth/**`, `/actuator/health`, swagger, h2. `/admin/**` needs `ROLE_ADMIN`. Everything else needs a token.
 
 ## Security requirements
-Validate all input with Bean Validation (`@Valid`). Never expose JPA entities in API responses or accept them as request bodies (`POST /jobs` currently violates this, see the backlog). Enforce **ownership and role** in the service layer, not just "authenticated". Log security events. `jwt.secret` in `application.properties` is a placeholder and must move to an env var before any deploy.
+Validate all input with Bean Validation (`@Valid`). Never expose JPA entities in API responses or accept them as request bodies (`POST /jobs` currently violates this, see the backlog). Enforce **ownership and role** in the service layer, not just "authenticated". Log security events. The JWT secret comes from `JWT_SECRET`. Local runs use the `dev` profile (active by default), which falls back to a public placeholder key. Any other profile fails at startup without `JWT_SECRET`, and also refuses the placeholder.
 
 ## Hazards
 - `data/` holds the dev H2 DB and uploaded resumes, is git-ignored, and contains the only copy of dev data. Don't delete it casually. With `ddl-auto=update`, entity changes mutate the schema in place.
