@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface JobRepo extends JpaRepository<JobPost, Integer> {
     List<JobPost> findAllByAvailable(boolean available);
+
+    List<JobPost> findAllByEmployerUsername(String username);
 }

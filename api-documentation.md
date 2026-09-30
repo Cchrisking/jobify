@@ -37,9 +37,9 @@ All error responses share the same envelope:
 
 | HTTP status | Trigger |
 |---|---|
-| `400` | Validation failure or illegal argument |
+| `400` | Validation failure, malformed JSON body or illegal argument |
 | `401` | Missing / expired / invalid JWT |
-| `403` | Forbidden (license / access violation) |
+| `403` | Forbidden: wrong role or not the owner of the resource |
 | `404` | Resource not found |
 | `422` | Business rule violation (e.g. duplicate company) |
 | `500` | Unexpected server error |
@@ -121,14 +121,15 @@ Authenticates an existing account.
 
 ## Jobs endpoints `/jobs/**`
 
-> `GET /jobs` — **public, no Authorization header required.**  
-> `POST /jobs` and `PATCH /jobs/{id}/available` — require `Authorization: Bearer <token>`.
+> `GET /jobs` and `GET /jobs/{id}` are **public, no Authorization header required.**
+> `GET /jobs/mine`, `POST /jobs`, `PUT /jobs/{id}` and `PATCH /jobs/{id}/available` require `Authorization: Bearer <token>`.
+> Writes are role- and ownership-checked in the service layer: only an `EMPLOYER` can create, and only the employer who created a post can edit or open/close it.
 
 ---
 
 ### `GET /jobs`
 
-Returns job postings. By default returns **all** posts regardless of status.
+Returns job postings. By default returns **all** posts regardless of status, from every employer. Employer panels should use `GET /jobs/mine` instead.
 
 **Query parameters**
 
@@ -136,70 +137,94 @@ Returns job postings. By default returns **all** posts regardless of status.
 |---|---|---|---|
 | `available` | boolean | no | `true` → open positions only; `false` → closed/filled only; omit → all |
 
-**Recommended usage for seekers:** `GET /jobs?available=true`  
-**Recommended usage for employers reviewing their closed posts:** `GET /jobs?available=false`
+**Recommended usage for seekers:** `GET /jobs?available=true`
 
-**Response `200 OK`**
-
-```json
-[
-  {
-    "postId": 1,
-    "jobTitle": "Senior Frontend Developer",
-    "jobDescription": "Senior React and TypeScript developer needed...",
-    "jobRating": 4.5,
-    "hourlyRate": 75.00,
-    "employerUsername": "techcorp",
-    "available": true
-  },
-  {
-    "postId": 3,
-    "jobTitle": "Junior QA Engineer",
-    "jobDescription": "Entry-level QA engineer...",
-    "jobRating": 4.0,
-    "hourlyRate": 35.00,
-    "employerUsername": "techcorp",
-    "available": false
-  }
-]
-```
+**Response `200 OK`** — array of `JobPostResponse` (see *Data models reference*).
 
 | Field | Type | Notes |
 |---|---|---|
 | `postId` | integer | Auto-generated primary key |
-| `jobTitle` | string | |
-| `jobDescription` | string | Up to 1000 characters |
-| `jobRating` | double | 0.0–5.0 |
+| `jobTitle` | string | Up to 150 characters |
+| `jobDescription` | string | Sanitized rich-text HTML, see *Description sanitizing* below |
+| `jobRating` | double | 0.0–5.0 (meaning under review, backlog B6) |
 | `hourlyRate` | double | USD per hour |
 | `employerUsername` | string \| null | Username of the posting employer; `null` if unassigned |
 | `available` | boolean | `true` = position open; `false` = closed / position filled |
+| `location` | string \| null | Free text |
+| `workMode` | string \| null | `ONSITE`, `REMOTE`, `HYBRID` |
+| `employmentType` | string \| null | e.g. `FULL_TIME` |
+| `createdAt` | ISO-8601 datetime \| null | No zone |
+| `requiredSkills` | string[] | Skill names |
+
+---
+
+### `GET /jobs/mine`
+
+**EMPLOYER only.** Every post owned by the caller, open and closed. Response `200`: array of `JobPostResponse`.
+
+| Status | When |
+|---|---|
+| `401` | Missing or invalid JWT token |
+| `403` | Caller is not an employer |
+
+---
+
+### `GET /jobs/{id}`
+
+Public. Response `200`: one `JobPostResponse`. `404` if it does not exist.
 
 ---
 
 ### `POST /jobs`
 
-Creates a new job post. New posts are open (`available: true`) by default.
+**EMPLOYER only.** Creates a job post owned by the caller. New posts are always open (`available: true`). The body is a dedicated request object, so fields such as `postId`, `employer` and `available` are ignored.
 
-**Request body**
+**Request body** (`CreateJobRequest`)
 
 ```json
 {
   "jobTitle": "Full-Stack Engineer",
-  "jobDescription": "Looking for a full-stack engineer with React and Spring Boot experience...",
+  "jobDescription": "<p>Looking for a full-stack engineer with React and Spring Boot experience...</p>",
   "jobRating": 4.5,
-  "hourlyRate": 65.00
+  "hourlyRate": 65.00,
+  "location": "Berlin, DE",
+  "workMode": "HYBRID",
+  "employmentType": "FULL_TIME",
+  "requiredSkills": ["Java", "Spring Boot"]
 }
 ```
 
-**Response `201 Created`** — returns the saved `JobPostResponse` with the generated `postId` and `available: true`.
+| Field | Rules |
+|---|---|
+| `jobTitle` | required, not blank, max 150 characters |
+| `jobDescription` | required, not blank, max 20,000 characters of submitted HTML (before sanitizing) |
+| `jobRating` | optional, 0–5, defaults to 0 |
+| `hourlyRate` | optional, not negative, defaults to 0 |
+| `location` | optional, max 255 characters |
+| `workMode`, `employmentType` | optional enum strings |
+| `requiredSkills` | optional array of skill **names** (max 30, each not blank, max 100). Unknown names are added to the shared skill catalog. This replaces the old array-of-objects form. |
+
+**Response `201 Created`** — the saved `JobPostResponse`.
+
+| Status | When |
+|---|---|
+| `400` | Validation failed. `message` lists the problems, for example `jobTitle is required; jobRating must be between 0 and 5` |
+| `401` | Missing or invalid JWT token |
+| `403` | Caller is not an employer: `Only employers can post jobs.` |
+
+---
+
+### `PUT /jobs/{id}`
+
+Replaces the editable fields (same body and rules as `POST /jobs`). The open/closed flag is not touched. Only the employer who created the post may do this.
+
+**Response `200 OK`** — the updated `JobPostResponse`. Errors: `400` validation, `401`, `403` (`You can only change job postings that you created.`), `404`.
 
 ---
 
 ### `PATCH /jobs/{id}/available`
 
-Opens or closes an existing job posting without modifying any other field.
-
-**Path parameter:** `id` — the `postId` of the job post.
+Opens or closes an existing job posting without modifying any other field. Only the employer who created the post may do this.
 
 **Request body**
 
@@ -209,28 +234,19 @@ Opens or closes an existing job posting without modifying any other field.
 
 **Response `200 OK`** — the full updated `JobPostResponse`.
 
-**Error responses**
-
 | Status | When |
 |---|---|
 | `401` | Missing or invalid JWT token |
+| `403` | Caller does not own the post |
 | `404` | No job post found with the given ID |
 
-**Example — mark a position as filled:**
+The browser preflight for `PATCH` is allowed (CORS methods: GET, POST, PUT, PATCH, DELETE, OPTIONS).
 
-```
-PATCH /jobs/3/available
-{ "available": false }
-→ 200 { "postId": 3, "jobTitle": "Junior QA Engineer", ..., "available": false }
-```
+---
 
-**Example — re-open a closed position:**
+### Description sanitizing
 
-```
-PATCH /jobs/3/available
-{ "available": true }
-→ 200 { "postId": 3, "jobTitle": "Junior QA Engineer", ..., "available": true }
-```
+`jobDescription` is cleaned on every create and edit, so it is safe to render as HTML. Allowed elements: `p, br, ul, ol, li, strong, em, h2, h3, a`. Only `a[href]` keeps an attribute, restricted to `http`, `https` and `mailto` links, and external links get `rel="nofollow"`. Everything else (scripts, styles, iframes, images, event handlers, `javascript:` URLs) is removed. Non-ASCII characters outside the basic plane, such as emoji, come back as numeric entities (`&#x1f680;`), which browsers render normally.
 
 ---
 
@@ -445,6 +461,26 @@ interface JobPostResponse {
   hourlyRate: number;             // USD per hour
   employerUsername: string | null;
   available: boolean;             // true = open; false = closed/filled
+  location: string | null;
+  workMode: "ONSITE" | "REMOTE" | "HYBRID" | null;
+  employmentType: string | null;
+  createdAt: string | null;       // ISO-8601, no zone
+  requiredSkills: string[];
+}
+```
+
+### `CreateJobRequest`
+
+```ts
+interface CreateJobRequest {
+  jobTitle: string;               // required, max 150
+  jobDescription: string;         // required, HTML, max 20,000 (sanitized server-side)
+  jobRating?: number;             // 0–5, default 0
+  hourlyRate?: number;            // >= 0, default 0
+  location?: string;              // max 255
+  workMode?: "ONSITE" | "REMOTE" | "HYBRID";
+  employmentType?: string;
+  requiredSkills?: string[];      // skill names
 }
 ```
 

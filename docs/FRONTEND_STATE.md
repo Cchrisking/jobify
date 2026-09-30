@@ -9,10 +9,10 @@ Base URL is hardcoded to `http://localhost:9080` in `app/lib/api.ts`. Token, use
 |---|---|---|
 | `POST /auth/login`, `POST /auth/register` | `AuthContext` | Register sends `role` SEEKER or EMPLOYER plus first and last name. |
 | `GET /jobs?available=true` | `useJobs`, `app/sitemap.ts` | Public. The whole list is loaded, and **search and filters run client-side**. |
-| `GET /jobs` (no filter) | `useEmployerJobs` | Employer panel. Returns **every employer's** jobs today (see backlog B2). |
+| `GET /jobs` (no filter) | `useEmployerJobs` | Employer panel. Returns every employer's jobs. **Switch to `GET /jobs/mine`** (B2, done on the back end). |
 | `GET /jobs/{id}` | `app/jobs/[id]/page.tsx` (SSR, SEO) | Public. Also feeds the JobPosting JSON-LD. |
 | `POST /jobs` | `PostJobModal` | Sends the 7 fields listed below. |
-| `PATCH /jobs/{id}/available` | `useEmployerJobs` | **PATCH is not in the CORS allow-list, so this fails from the browser** (B1). |
+| `PATCH /jobs/{id}/available` | `useEmployerJobs` | Fixed in sprint 1 (CORS now allows PATCH). Owner only. |
 | `GET/PUT /users/seekers/me`, `GET/PUT /users/employers/me` | `UserProfile` | PUT body is `{name, lastName}`. |
 | `POST /users/companies`, `PUT /users/companies/{id}` | `UserProfile` | `{name}`. |
 | `POST/GET/DELETE /users/seekers/me/resume` | `useResume` | Multipart upload, blob download. Reads `SeekerResponse.cv`. |
@@ -63,6 +63,7 @@ The two sessions do not share memory. When you change something the front end to
 3. Append an entry below. The user relays it to the front-end session.
 
 ### Requests for the front-end session (append here)
+- [ ] Switch `useEmployerJobs` to `GET /jobs/mine` and handle 403 on job writes.
 - [ ] Add `requiredSkills: string[]` to `Job` and `CreateJobRequest`, and add a skills picker to `PostJobModal`.
 - [ ] Extend `SeekerResponse` with `educations/certifications/experiences/skills`, then build the profile-editing UI.
 - [ ] Replace `applyForJob`/`saveJob` in-memory state with API calls once the P1 and P2 endpoints exist.
@@ -70,4 +71,11 @@ The two sessions do not share memory. When you change something the front end to
 - [ ] Replace `MOCK_USERS` with `GET /admin/users`.
 
 ### Change log (back end → front end)
-_(none yet)_
+**Sprint 1 (2026-09-30)**
+- `PATCH` now passes CORS, so the employer open/close toggle works from the browser (B1).
+- New `GET /jobs/mine` (EMPLOYER only, includes closed jobs). **Please switch `useEmployerJobs` to it**; `GET /jobs` still returns every employer's jobs (B2).
+- Job writes are checked on the server. A non-employer `POST /jobs` is now **403** (was 404 "Employer not found"), and editing or toggling someone else's job is **403** with a readable `message` (B3).
+- `jobDescription` is sanitized on write to `p, br, ul, ol, li, strong, em, h2, h3, a[href]`; the max is 20,000 characters of submitted HTML. What you get back may differ slightly from what you sent (for example emoji as `&#x1f680;`, `rel="nofollow"` on links) (B4).
+- `POST /jobs` now binds `CreateJobRequest`. The 7 fields you send today are unchanged and still work. `requiredSkills` is now an array of **names** (`["Java"]`), not objects. Validation errors are **400** with a `message` such as `jobTitle is required; jobRating must be between 0 and 5` (B5).
+- New `PUT /jobs/{id}` to edit a post (same body as create, owner only) (B5).
+- Malformed JSON bodies now return 400 instead of 500.
