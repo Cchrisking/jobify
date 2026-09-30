@@ -2,11 +2,17 @@ package com.mcverse.jobify.common.exception;
 
 import com.mcverse.jobify.common.response.ApiResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -33,6 +39,35 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiResponse<Void> handleIllegalArgument(IllegalArgumentException ex) {
         return ApiResponse.error(ex.getMessage(), HttpStatus.BAD_REQUEST.value());
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResponse<Void> handleValidation(MethodArgumentNotValidException ex) {
+        String message = ex.getBindingResult().getFieldErrors().stream()
+                .map(GlobalExceptionHandler::describe)
+                .distinct()
+                .collect(Collectors.joining("; "));
+        if (message.isBlank()) {
+            message = "The request is not valid.";
+        }
+        return ApiResponse.error(message, HttpStatus.BAD_REQUEST.value());
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResponse<Void> handleUnreadableBody(HttpMessageNotReadableException ex) {
+        return ApiResponse.error("The request body is missing or malformed.", HttpStatus.BAD_REQUEST.value());
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ApiResponse<Void> handleAccessDenied(AccessDeniedException ex) {
+        return ApiResponse.error("You do not have permission to do that.", HttpStatus.FORBIDDEN.value());
+    }
+
+    private static String describe(FieldError error) {
+        return error.getField() + " " + error.getDefaultMessage();
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)

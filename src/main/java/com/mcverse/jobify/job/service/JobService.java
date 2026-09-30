@@ -1,6 +1,8 @@
 package com.mcverse.jobify.job.service;
 
+import com.mcverse.jobify.common.exception.LicenseValidationException;
 import com.mcverse.jobify.common.exception.ResourceNotFoundException;
+import com.mcverse.jobify.job.dto.CreateJobRequest;
 import com.mcverse.jobify.job.dto.JobPostResponse;
 import com.mcverse.jobify.model.JobPost;
 import com.mcverse.jobify.model.Skill;
@@ -8,6 +10,8 @@ import com.mcverse.jobify.job.repository.JobRepo;
 import com.mcverse.jobify.user.model.Employer;
 import com.mcverse.jobify.user.repository.EmployerRepository;
 import com.mcverse.jobify.user.repository.SkillRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +20,8 @@ import java.util.List;
 
 @Service
 public class JobService {
+
+    private static final Logger log = LoggerFactory.getLogger(JobService.class);
 
     @Autowired
     private JobRepo repo;
@@ -26,12 +32,22 @@ public class JobService {
     @Autowired
     private SkillRepository skillRepo;
 
+    @Autowired
+    private HtmlSanitizer htmlSanitizer;
+
     @Transactional(readOnly = true)
     public List<JobPostResponse> getJobs(Boolean available) {
         List<JobPost> posts = (available != null)
                 ? repo.findAllByAvailable(available)
                 : repo.findAll();
         return posts.stream().map(this::toResponse).toList();
+    }
+
+    /** Every job owned by the employer, open and closed. */
+    @Transactional(readOnly = true)
+    public List<JobPostResponse> getJobsOwnedBy(String employerUsername) {
+        requireEmployer(employerUsername, "view your job postings");
+        return repo.findAllByEmployerUsername(employerUsername).stream().map(this::toResponse).toList();
     }
 
     @Transactional(readOnly = true)
@@ -42,28 +58,74 @@ public class JobService {
     }
 
     @Transactional
-    public JobPostResponse addJob(JobPost jobPost, String employerUsername) {
-        Employer employer = employerRepo.findByUsername(employerUsername)
-                .orElseThrow(() -> new ResourceNotFoundException("Employer", employerUsername));
-        jobPost.setEmployer(employer);
-        jobPost.setRequiredSkills(resolveSkills(jobPost.getRequiredSkills()));
-        return toResponse(repo.save(jobPost));
-    }
-
-    private List<Skill> resolveSkills(List<Skill> requestedSkills) {
-        return requestedSkills.stream()
-                .map(skill -> skillRepo.findByNameIgnoreCase(skill.getName())
-                        .orElseGet(() -> skillRepo.save(new Skill(skill.getName(), skill.getCategory()))))
-                .distinct()
-                .toList();
+    public JobPostResponse addJob(CreateJobRequest request, String employerUsername) {
+        Employer employer = requireEmployer(employerUsername, "post jobs");
+        JobPost job = new JobPost(request.jobTitle().trim(), htmlSanitizer.sanitize(request.jobDescription()),
+                valueOrZero(request.jobRating()), valueOrZero(request.hourlyRate()));
+        job.setEmployer(employer);
+        applyEditableFields(job, request);
+        return toResponse(repo.save(job));
     }
 
     @Transactional
-    public JobPostResponse updateAvailability(Integer id, boolean available) {
-        JobPost job = repo.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("JobPost", id.toString()));
+    public JobPostResponse updateJob(Integer id, CreateJobRequest request, String username) {
+        JobPost job = findOwnedJob(id, username);
+        job.setJobTitle(request.jobTitle().trim());
+        job.setJobDescription(htmlSanitizer.sanitize(request.jobDescription()));
+        job.setJobRating(valueOrZero(request.jobRating()));
+        job.setHourlyRate(valueOrZero(request.hourlyRate()));
+        applyEditableFields(job, request);
+        return toResponse(repo.save(job));
+    }
+
+    @Transactional
+    public JobPostResponse updateAvailability(Integer id, boolean available, String username) {
+        JobPost job = findOwnedJob(id, username);
         job.setAvailable(available);
         return toResponse(repo.save(job));
+    }
+
+    private void applyEditableFields(JobPost job, CreateJobRequest request) {
+        job.setLocation(request.location());
+        job.setWorkMode(request.workMode());
+        job.setEmploymentType(request.employmentType());
+        job.setRequiredSkills(resolveSkills(request.requiredSkills()));
+    }
+
+    private Employer requireEmployer(String username, String action) {
+        return employerRepo.findByUsername(username).orElseThrow(() -> {
+            log.warn("Denied: user '{}' tried to {} without the EMPLOYER role", username, action);
+            return new LicenseValidationException("Only employers can " + action + ".");
+        });
+    }
+
+    /** Loads a job and checks that the caller is the employer who posted it. */
+    private JobPost findOwnedJob(Integer id, String username) {
+        JobPost job = repo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("JobPost", id.toString()));
+        Employer owner = job.getEmployer();
+        if (owner == null || !owner.getUsername().equals(username)) {
+            log.warn("Denied: user '{}' tried to modify job {} owned by '{}'", username, id,
+                    owner == null ? "nobody" : owner.getUsername());
+            throw new LicenseValidationException("You can only change job postings that you created.");
+        }
+        return job;
+    }
+
+    private List<Skill> resolveSkills(List<String> names) {
+        if (names == null) {
+            return new java.util.ArrayList<>();
+        }
+        return names.stream()
+                .map(String::trim)
+                .map(name -> skillRepo.findByNameIgnoreCase(name)
+                        .orElseGet(() -> skillRepo.save(new Skill(name, null))))
+                .distinct()
+                .collect(java.util.stream.Collectors.toCollection(java.util.ArrayList::new));
+    }
+
+    private static double valueOrZero(Double value) {
+        return value == null ? 0.0 : value;
     }
 
     private JobPostResponse toResponse(JobPost job) {

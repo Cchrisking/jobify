@@ -2,7 +2,7 @@ package com.mcverse.jobify.job.controller;
 
 import com.mcverse.jobify.job.dto.JobPostResponse;
 import com.mcverse.jobify.job.dto.UpdateJobAvailabilityRequest;
-import com.mcverse.jobify.model.JobPost;
+import com.mcverse.jobify.job.dto.CreateJobRequest;
 import com.mcverse.jobify.job.service.JobService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -52,6 +53,21 @@ public class JobController {
     }
 
     @Operation(
+            summary = "List my job posts",
+            description = "EMPLOYER only. Returns every post owned by the caller, open and closed."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "The caller's job posts (may be empty)",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = JobPostResponse.class)))),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token"),
+            @ApiResponse(responseCode = "403", description = "Caller is not an employer"),
+    })
+    @GetMapping("/mine")
+    public List<JobPostResponse> getMyJobs(@AuthenticationPrincipal UserDetails principal) {
+        return jobService.getJobsOwnedBy(principal.getUsername());
+    }
+
+    @Operation(
             summary = "Get a single job post",
             description = "Public endpoint — no authentication required."
     )
@@ -70,37 +86,61 @@ public class JobController {
 
     @Operation(
             summary = "Create a new job post",
-            description = "Persists a new JobPost. Returns the saved post with its generated ID. " +
-                    "New posts are open (available=true) by default."
+            description = "EMPLOYER only. The description is sanitized to a small HTML allow-list " +
+                    "(p, br, ul, ol, li, strong, em, h2, h3, a[href]). New posts are open (available=true)."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Job post created",
                     content = @Content(schema = @Schema(implementation = JobPostResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Validation failed"),
             @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token"),
+            @ApiResponse(responseCode = "403", description = "Caller is not an employer"),
     })
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public JobPostResponse addJob(@AuthenticationPrincipal UserDetails principal, @RequestBody JobPost jobPost) {
-        return jobService.addJob(jobPost, principal.getUsername());
+    public JobPostResponse addJob(@AuthenticationPrincipal UserDetails principal,
+                                  @Valid @RequestBody CreateJobRequest request) {
+        return jobService.addJob(request, principal.getUsername());
+    }
+
+    @Operation(
+            summary = "Edit a job post",
+            description = "Replaces the editable fields of a post. Only the employer who created it may do this. " +
+                    "The open/closed flag is not changed here, use `PATCH /jobs/{id}/available`."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Job post updated",
+                    content = @Content(schema = @Schema(implementation = JobPostResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Validation failed"),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token"),
+            @ApiResponse(responseCode = "403", description = "Caller does not own this post"),
+            @ApiResponse(responseCode = "404", description = "Job post not found"),
+    })
+    @PutMapping("/{id}")
+    public JobPostResponse updateJob(
+            @AuthenticationPrincipal UserDetails principal,
+            @Parameter(description = "Job post ID", example = "3") @PathVariable Integer id,
+            @Valid @RequestBody CreateJobRequest request) {
+        return jobService.updateJob(id, request, principal.getUsername());
     }
 
     @Operation(
             summary = "Open or close a job posting",
-            description = "Sets the `available` flag on an existing job post. " +
-                    "Use this to mark a position as filled (`available: false`) or re-open it (`available: true`). " +
-                    "Ownership is not enforced at this stage — any authenticated user can update availability."
+            description = "Sets the `available` flag. Only the employer who created the post may do this."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Job post updated",
                     content = @Content(schema = @Schema(implementation = JobPostResponse.class))),
             @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token"),
+            @ApiResponse(responseCode = "403", description = "Caller does not own this post"),
             @ApiResponse(responseCode = "404", description = "Job post not found"),
     })
     @PatchMapping("/{id}/available")
     public JobPostResponse updateAvailability(
+            @AuthenticationPrincipal UserDetails principal,
             @Parameter(description = "Job post ID", example = "3")
             @PathVariable Integer id,
             @RequestBody UpdateJobAvailabilityRequest request) {
-        return jobService.updateAvailability(id, request.available());
+        return jobService.updateAvailability(id, request.available(), principal.getUsername());
     }
 }

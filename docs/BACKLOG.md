@@ -4,19 +4,19 @@ Ordered by priority. **B** = bug or security, **P** = product feature, **T** = t
 
 ## Bugs and security (do first)
 
-**B1. CORS blocks PATCH.** `SecurityConfig.corsConfigurationSource` allows `GET, POST, PUT, DELETE, OPTIONS` only. The front end calls `PATCH /jobs/{id}/available` (open/close a job), so the browser preflight fails. Add `PATCH`. *Front-end impact: fixes the employer open/close toggle.*
+**B1. ✅ CORS blocks PATCH.** `SecurityConfig.corsConfigurationSource` allows `GET, POST, PUT, DELETE, OPTIONS` only. The front end calls `PATCH /jobs/{id}/available` (open/close a job), so the browser preflight fails. Add `PATCH`. *Front-end impact: fixes the employer open/close toggle.*
 
-**B2. Employers see everyone's jobs.** `GET /jobs` has no owner filter, and the employer panel calls it unfiltered. Add `GET /jobs/mine` (EMPLOYER only), or an `employer=me` param, and tell the front-end session to switch.
+**B2. ✅ Employers see everyone's jobs.** `GET /jobs` has no owner filter, and the employer panel calls it unfiltered. Add `GET /jobs/mine` (EMPLOYER only), or an `employer=me` param, and tell the front-end session to switch.
 
-**B3. No ownership or role checks on job writes.** `PATCH /jobs/{id}/available` states "any authenticated user can update availability". `POST /jobs` only checks "authenticated", so a SEEKER token gets "Employer not found" (404) rather than a proper 403. Enforce `ROLE_EMPLOYER` for create, and ownership for update, in the service layer. Add tests.
+**B3. ✅ No ownership or role checks on job writes.** `PATCH /jobs/{id}/available` states "any authenticated user can update availability". `POST /jobs` only checks "authenticated", so a SEEKER token gets "Employer not found" (404) rather than a proper 403. Enforce `ROLE_EMPLOYER` for create, and ownership for update, in the service layer. Add tests.
 
-**B4. Stored XSS through `jobDescription`.** The front end sends HTML from a rich-text editor and DOMPurify only protects one client. Sanitize server-side (for example the OWASP Java HTML Sanitizer, with an allow-list of p, br, ul, ol, li, strong, em, h2, h3, a[href]) on write. Decide and document a max length. `api-documentation.md` says 1000, but the column is `@Lob`.
+**B4. ✅ Stored XSS through `jobDescription`.** The front end sends HTML from a rich-text editor and DOMPurify only protects one client. Sanitize server-side (for example the OWASP Java HTML Sanitizer, with an allow-list of p, br, ul, ol, li, strong, em, h2, h3, a[href]) on write. Decide and document a max length. `api-documentation.md` says 1000, but the column is `@Lob`.
 
-**B5. Entity used as request body.** `POST /jobs` binds `@RequestBody JobPost` (a JPA entity, with no `@Valid`), so clients can set `postId`, `employer`, `available` and so on. Introduce `CreateJobRequest` (title, description, rating, rate, location, workMode, employmentType, requiredSkills: string[]) with Bean Validation. Keep the JSON field names exactly as today so the front end doesn't break. A `PUT /jobs/{id}` (edit) is the natural companion.
+**B5. ✅ Entity used as request body.** `POST /jobs` binds `@RequestBody JobPost` (a JPA entity, with no `@Valid`), so clients can set `postId`, `employer`, `available` and so on. Introduce `CreateJobRequest` (title, description, rating, rate, location, workMode, employmentType, requiredSkills: string[]) with Bean Validation. Keep the JSON field names exactly as today so the front end doesn't break. A `PUT /jobs/{id}` (edit) is the natural companion.
 
 **B6. `jobRating` is employer-supplied.** The posting employer sets the "rating". Product question: is it really an employer rating or quality score? The UI exposes it as an input. Clarify before building on it (the fake match score uses it).
 
-**B7. JWT secret and lifetime.** Secret is committed in `application.properties`. Move to `${JWT_SECRET}`, and fail startup if it's missing outside the `dev` profile. Consider refresh tokens. The front end just logs out on 401 or expiry.
+**B7. ✅ JWT secret and lifetime.** *(Done in sprint 1: `JWT_SECRET` env var, startup validation. Refresh tokens remain a follow-up spike.)* Secret is committed in `application.properties`. Move to `${JWT_SECRET}`, and fail startup if it's missing outside the `dev` profile. Consider refresh tokens. The front end just logs out on 401 or expiry.
 
 ## Product features the front end is waiting on (P1 is the big one)
 
@@ -42,7 +42,7 @@ Ordered by priority. **B** = bug or security, **P** = product feature, **T** = t
 
 ## Tech debt and platform
 
-**T1. Tests.** Only `contextLoads` exists, against a 85% coverage target in `../Claude.md`. Start with security tests (public vs authed vs admin routes), `JobService`, `AuthService`, and account deletion, then add each new feature test-first.
+**T1. Tests.** *(Sprint 1 progress: JaCoCo report added; security, job, auth, account-deletion and password tests done; overall instruction coverage 53% against the 85% target. Still uncovered: user/seeker profile services, admin users, CMS controllers, file storage, `common/validation`. Add tests with each new feature.)* Only `contextLoads` exists, against a 85% coverage target in `../Claude.md`. Start with security tests (public vs authed vs admin routes), `JobService`, `AuthService`, and account deletion, then add each new feature test-first.
 
 **T2. Bean Validation everywhere.** Audit every request DTO for `@Valid` and constraints. Check that `MethodArgumentNotValidException` yields a readable 400 `message` in the envelope, since the front end prints it.
 

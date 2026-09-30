@@ -9,10 +9,10 @@ Base URL is hardcoded to `http://localhost:9080` in `app/lib/api.ts`. Token, use
 |---|---|---|
 | `POST /auth/login`, `POST /auth/register` | `AuthContext` | Register sends `role` SEEKER or EMPLOYER plus first and last name. |
 | `GET /jobs?available=true` | `useJobs`, `app/sitemap.ts` | Public. The whole list is loaded, and **search and filters run client-side**. |
-| `GET /jobs` (no filter) | `useEmployerJobs` | Employer panel. Returns **every employer's** jobs today (see backlog B2). |
+| `GET /jobs` (no filter) | `useEmployerJobs` | Employer panel. Returns every employer's jobs. **Switch to `GET /jobs/mine`** (B2, done on the back end). |
 | `GET /jobs/{id}` | `app/jobs/[id]/page.tsx` (SSR, SEO) | Public. Also feeds the JobPosting JSON-LD. |
 | `POST /jobs` | `PostJobModal` | Sends the 7 fields listed below. |
-| `PATCH /jobs/{id}/available` | `useEmployerJobs` | **PATCH is not in the CORS allow-list, so this fails from the browser** (B1). |
+| `PATCH /jobs/{id}/available` | `useEmployerJobs` | Fixed in sprint 1 (CORS now allows PATCH). Owner only. |
 | `GET/PUT /users/seekers/me`, `GET/PUT /users/employers/me` | `UserProfile` | PUT body is `{name, lastName}`. |
 | `POST /users/companies`, `PUT /users/companies/{id}` | `UserProfile` | `{name}`. |
 | `POST/GET/DELETE /users/seekers/me/resume` | `useResume` | Multipart upload, blob download. Reads `SeekerResponse.cv`. |
@@ -56,18 +56,29 @@ The front end's `Job` type (`app/types/job.ts`) has no `requiredSkills` field, a
 - Deletion-request GET returning `null` is intentional.
 - Sitemap and SEO fetch server-side with `cache: 'no-store'`. Both survive the API being down, so keep `GET /jobs` cheap.
 
-## 5. Contract-change protocol
-The two sessions do not share memory. When you change something the front end touches:
-1. Keep the old shape working or coordinate the break.
-2. Update `api-documentation.md`.
-3. Append an entry below. The user relays it to the front-end session.
+## 5. Two-file hand-off protocol
+The two sessions do not share memory, so they talk through two files in `docs/`. Each file has one writer.
 
-### Requests for the front-end session (append here)
-- [ ] Add `requiredSkills: string[]` to `Job` and `CreateJobRequest`, and add a skills picker to `PostJobModal`.
-- [ ] Extend `SeekerResponse` with `educations/certifications/experiences/skills`, then build the profile-editing UI.
-- [ ] Replace `applyForJob`/`saveJob` in-memory state with API calls once the P1 and P2 endpoints exist.
-- [ ] Replace the fake `matchScore` in `jobEnrichment.ts` once the matching endpoint exists.
-- [ ] Replace `MOCK_USERS` with `GET /admin/users`.
+| File | Written by | Read by | Contains |
+|---|---|---|---|
+| `docs/FRONTEND_STATE.md` (this file) | **Front-end session** | Back-end session | What the front end calls, fakes and expects from the back end |
+| `docs/BACKEND_STATE.md` | **Back-end session** | Front-end session | Every back-end change, and what the front end must do about it |
 
-### Change log (back end → front end)
-_(none yet)_
+**Front-end session, every time you finish a change:**
+1. Read `docs/BACKEND_STATE.md` first and act on new entries and open requests.
+2. Update sections 1 to 4 above if the calls, fakes or assumptions changed.
+3. Add or tick items under "Requests to the back end" below (what you need, the exact route, shape and status codes you expect, and which screen is waiting).
+4. Commit the file with the change.
+
+### Requests to the back end (append here)
+Format: `- [ ] <what you need> — route, request/response shape, errors — screen waiting on it`
+The back-end session turns each open request into a GitHub issue (or links an existing one) and answers in `docs/BACKEND_STATE.md`.
+
+- [ ] Applications: apply, list my applications, withdraw, employer review pipeline (backlog P1, issue #9)
+- [ ] Saved jobs (P2, issue #10)
+- [ ] Real match score and recommended jobs (P3, issue #12)
+- [ ] `GET /admin/users` with paging and search, plus `GET /admin/stats` (P7, issue #16)
+- [ ] Notifications (P6, issue #14)
+- [ ] Server-side job search and paging (P4, issue #13)
+
+_Front-end tasks that came from the back end are tracked in `docs/BACKEND_STATE.md`, not here._
