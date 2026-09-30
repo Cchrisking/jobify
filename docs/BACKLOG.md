@@ -42,7 +42,7 @@ Ordered by priority. **B** = bug or security, **P** = product feature, **T** = t
 
 ## Tech debt and platform
 
-**T1. Tests.** Only `contextLoads` exists, against a 85% coverage target in `../Claude.md`. Start with security tests (public vs authed vs admin routes), `JobService`, `AuthService`, and account deletion, then add each new feature test-first.
+**T1. Tests.** *(Sprint 1 progress: JaCoCo report added; security, job, auth, account-deletion and password tests done; overall instruction coverage 53% against the 85% target. Still uncovered: user/seeker profile services, admin users, CMS controllers, file storage, `common/validation`. Add tests with each new feature.)* Only `contextLoads` exists, against a 85% coverage target in `../Claude.md`. Start with security tests (public vs authed vs admin routes), `JobService`, `AuthService`, and account deletion, then add each new feature test-first.
 
 **T2. Bean Validation everywhere.** Audit every request DTO for `@Valid` and constraints. Check that `MethodArgumentNotValidException` yields a readable 400 `message` in the envelope, since the front end prints it.
 

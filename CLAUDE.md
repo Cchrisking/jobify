@@ -22,7 +22,7 @@ Spring Boot **4.0.0-M3** (milestone), Java 21, Spring Security with hand-rolled 
 ## Commands
 ```
 mvn compile                 # build
-mvn test                    # only JobifyApplicationTests.contextLoads exists today
+mvn test                    # unit + MockMvc integration tests; coverage report in target/site/jacoco/index.html
 mvn spring-boot:run         # then http://localhost:9080
 fuser -k 9080/tcp           # free the port if a stale run is holding it
 ```
