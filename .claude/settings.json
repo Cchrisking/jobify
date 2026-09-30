@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//home/christou/Documents/confidential/mcverse/projects/jobify/**)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git branch*)",
+      "Bash(git checkout -b feature-*)",
+      "Bash(mvn compile*)",
+      "Bash(mvn test*)",
+      "Bash(mvn -q *)",
+      "Bash(curl -s http://localhost:9080/*)",
+      "Bash(curl -s -X * http://localhost:9080/*)"
+    ]
+  }
+}
