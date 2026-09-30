@@ -56,26 +56,29 @@ The front end's `Job` type (`app/types/job.ts`) has no `requiredSkills` field, a
 - Deletion-request GET returning `null` is intentional.
 - Sitemap and SEO fetch server-side with `cache: 'no-store'`. Both survive the API being down, so keep `GET /jobs` cheap.
 
-## 5. Contract-change protocol
-The two sessions do not share memory. When you change something the front end touches:
-1. Keep the old shape working or coordinate the break.
-2. Update `api-documentation.md`.
-3. Append an entry below. The user relays it to the front-end session.
+## 5. Two-file hand-off protocol
+The two sessions do not share memory, so they talk through two files in `docs/`. Each file has one writer.
 
-### Requests for the front-end session (append here)
-- [ ] Switch `useEmployerJobs` to `GET /jobs/mine` and handle 403 on job writes.
-- [ ] Add `requiredSkills: string[]` to `Job` and `CreateJobRequest`, and add a skills picker to `PostJobModal`.
-- [ ] Extend `SeekerResponse` with `educations/certifications/experiences/skills`, then build the profile-editing UI.
-- [ ] Replace `applyForJob`/`saveJob` in-memory state with API calls once the P1 and P2 endpoints exist.
-- [ ] Replace the fake `matchScore` in `jobEnrichment.ts` once the matching endpoint exists.
-- [ ] Replace `MOCK_USERS` with `GET /admin/users`.
+| File | Written by | Read by | Contains |
+|---|---|---|---|
+| `docs/FRONTEND_STATE.md` (this file) | **Front-end session** | Back-end session | What the front end calls, fakes and expects from the back end |
+| `docs/BACKEND_STATE.md` | **Back-end session** | Front-end session | Every back-end change, and what the front end must do about it |
 
-### Change log (back end → front end)
-**Sprint 1 (2026-09-30)**
-- `PATCH` now passes CORS, so the employer open/close toggle works from the browser (B1).
-- New `GET /jobs/mine` (EMPLOYER only, includes closed jobs). **Please switch `useEmployerJobs` to it**; `GET /jobs` still returns every employer's jobs (B2).
-- Job writes are checked on the server. A non-employer `POST /jobs` is now **403** (was 404 "Employer not found"), and editing or toggling someone else's job is **403** with a readable `message` (B3).
-- `jobDescription` is sanitized on write to `p, br, ul, ol, li, strong, em, h2, h3, a[href]`; the max is 20,000 characters of submitted HTML. What you get back may differ slightly from what you sent (for example emoji as `&#x1f680;`, `rel="nofollow"` on links) (B4).
-- `POST /jobs` now binds `CreateJobRequest`. The 7 fields you send today are unchanged and still work. `requiredSkills` is now an array of **names** (`["Java"]`), not objects. Validation errors are **400** with a `message` such as `jobTitle is required; jobRating must be between 0 and 5` (B5).
-- New `PUT /jobs/{id}` to edit a post (same body as create, owner only) (B5).
-- Malformed JSON bodies now return 400 instead of 500.
+**Front-end session, every time you finish a change:**
+1. Read `docs/BACKEND_STATE.md` first and act on new entries and open requests.
+2. Update sections 1 to 4 above if the calls, fakes or assumptions changed.
+3. Add or tick items under "Requests to the back end" below (what you need, the exact route, shape and status codes you expect, and which screen is waiting).
+4. Commit the file with the change.
+
+### Requests to the back end (append here)
+Format: `- [ ] <what you need> — route, request/response shape, errors — screen waiting on it`
+The back-end session turns each open request into a GitHub issue (or links an existing one) and answers in `docs/BACKEND_STATE.md`.
+
+- [ ] Applications: apply, list my applications, withdraw, employer review pipeline (backlog P1, issue #9)
+- [ ] Saved jobs (P2, issue #10)
+- [ ] Real match score and recommended jobs (P3, issue #12)
+- [ ] `GET /admin/users` with paging and search, plus `GET /admin/stats` (P7, issue #16)
+- [ ] Notifications (P6, issue #14)
+- [ ] Server-side job search and paging (P4, issue #13)
+
+_Front-end tasks that came from the back end are tracked in `docs/BACKEND_STATE.md`, not here._
